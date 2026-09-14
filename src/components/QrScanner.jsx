@@ -27,16 +27,13 @@ const QrScanner = ({ onScan }) => {
           { facingMode: "environment" },
           config,
           (decodedText) => {
-            // Immediately stop camera upon scan and trigger callback
-            if (scannerRef.current && scannerRef.current.isScanning) {
-              scannerRef.current.stop().then(() => {
-                onScan();
-              }).catch(() => {
-                onScan();
-              });
-            } else {
-              onScan();
-            }
+            // Trigger callback immediately to show video without delay
+            onScan();
+            try {
+              if (scannerRef.current && scannerRef.current.isScanning) {
+                scannerRef.current.stop().catch(() => {});
+              }
+            } catch (e) {}
           },
           (errorMessage) => {
             // Ignore ongoing frame decode errors

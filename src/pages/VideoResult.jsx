@@ -1,21 +1,50 @@
 import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useStudent } from '../context/StudentContext';
+import { getVideo } from '../utils/storage';
 import VideoPlayer from '../components/VideoPlayer';
 
 const VideoResult = () => {
   const navigate = useNavigate();
   const { videoUrl, loadVideo } = useStudent();
+  const [localUrl, setLocalUrl] = React.useState(videoUrl);
+  const [loading, setLoading] = React.useState(!videoUrl);
 
   useEffect(() => {
-    loadVideo();
-  }, [loadVideo]);
+    let active = true;
+    const fetchVideo = async () => {
+      if (!videoUrl) {
+        const blob = await getVideo();
+        if (blob && active) {
+          const url = URL.createObjectURL(blob);
+          setLocalUrl(url);
+          setLoading(false);
+          return;
+        }
+      } else {
+        setLocalUrl(videoUrl);
+      }
+      if (active) setLoading(false);
+    };
+    fetchVideo();
+    return () => { active = false; };
+  }, [videoUrl]);
 
   const handleClose = () => {
     navigate('/');
   };
 
-  if (!videoUrl) {
+  const activeVideoUrl = localUrl || videoUrl;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center text-white">
+        <p className="animate-pulse">Loading video...</p>
+      </div>
+    );
+  }
+
+  if (!activeVideoUrl) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4 text-white text-center">
         <h2 className="text-xl font-bold mb-4">No Video Found</h2>
@@ -32,7 +61,7 @@ const VideoResult = () => {
 
   return (
     <div className="h-screen w-full bg-black">
-      <VideoPlayer videoUrl={videoUrl} onClose={handleClose} />
+      <VideoPlayer videoUrl={activeVideoUrl} onClose={handleClose} />
     </div>
   );
 };
